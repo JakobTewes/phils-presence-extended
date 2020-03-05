@@ -1,0 +1,31 @@
+#-------------------------------------------
+# Packages / Presence Tracking
+#-------------------------------------------
+homeassistant:
+  customize:
+    sensor.traveltime_bhome_to_fhome:
+      friendly_name: 'BHome nach FHome'
+      icon: mdi:timer
+    sensor.traveltime_jakob_iphone_to_bhome:
+      friendly_name: 'Jakob ETA'
+      icon: mdi:timer
+    sensor.traveltime_katharina_iphone_to_bhome:
+      friendly_name: 'Katharina ETA'
+      icon: mdi:timer
+#-------------------------------------------
+sensor:
+  - platform: waze_travel_time
+    name: traveltime_bhome_to_fhome
+    origin: home
+    destination: fhome
+    region: 'EU'
+  - platform: waze_travel_time
+    name: traveltime_jakob_iphone_to_bhome
+    origin: device_tracker.jakob_iphone
+    destination: home
+    region: 'EU'
+  - platform: waze_travel_time
+    name: traveltime_katharina_iphone_to_bhome
+    origin: device_tracker.katharina_iphone
+    destination: home
+    region: 'EU'

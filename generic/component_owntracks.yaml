@@ -1,0 +1,33 @@
+#-------------------------------------------
+# Packages / Components OwnTracks
+#-------------------------------------------
+#homeassistant:
+#  customize:
+#    sensor.jakob_iphone_battery:
+#      icon: mdi:cellphone-iphone
+#    sensor.katharina_iphone_battery:
+#      icon: mdi:cellphone-iphone
+#-------------------------------------------
+#sensor:
+#  - platform: mqtt
+#    state_topic: "owntracks/jakob/iphone"
+#    name: "Jakob iPhone Battery"
+#    qos: 0
+#    unit_of_measurement: "%"
+#    value_template: '{{ value_json.batt }}'
+#
+#  - platform: mqtt
+#    state_topic: "owntracks/katharina/iphone"
+#    name: "Katharina iPhone Battery"
+#    qos: 0
+#    unit_of_measurement: "%"
+#    value_template: '{{ value_json.batt }}'
+#-------------------------------------------
+owntracks:
+  max_gps_accuracy: 200
+  waypoints: true
+  waypoint_whitelist:
+    - jakob
+    - katharina
+  region_mapping:
+    fhome: home

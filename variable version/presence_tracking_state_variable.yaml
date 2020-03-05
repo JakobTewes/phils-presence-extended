@@ -1,0 +1,307 @@
+#-------------------------------------------
+# Packages / Presence Tracking State
+#-------------------------------------------
+################################################
+## Variable
+################################################
+variable:
+  presence_jakob:
+    value: Home
+    restore: true
+    attributes:
+      friendly_name: 'Präsenz Jakob'
+      icon: mdi:tooltip-account
+  presence_katharina:
+    value: Home
+    restore: true
+    attributes:
+      friendly_name: 'Präsenz Katharina'
+      icon: mdi:tooltip-account
+################################################
+## Input Select
+################################################
+input_select:
+  override_jakob:
+    name: Override Jakob
+    options:
+      - Not Set
+      - Just Arrived
+      - Home
+      - Just Left
+      - Away
+      - Extended Away
+    initial: Not Set
+    icon: mdi:account-alert-outline
+  override_katharina:
+    name: Override Katharina
+    options:
+      - Not Set
+      - Just Arrived
+      - Home
+      - Just Left
+      - Away
+      - Extended Away
+    initial: Not Set
+    icon: mdi:account-alert-outline
+################################################
+## Automation
+################################################
+automation:
+  - alias: 'presence tracking state person just arrived'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - device_tracker.jakob_iphone
+        - device_tracker.katharina_iphone
+        from: 'not_home'
+        to: 'home'
+        for:
+          seconds: 3
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'device_tracker.jakob_iphone' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: >
+            {% if trigger.entity_id == 'device_tracker.jakob_iphone' %}
+              {% if states.variable.presence_jakob.state == 'Just Left' %}
+                Home
+              {% else %}
+                Just Arrived
+              {% endif %}
+            {% else %}
+              {% if states.variable.presence_katharina.state == 'Just Left' %}
+                Home
+              {% else %}
+                Just Arrived
+              {% endif %}
+            {% endif %}
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called person_just_arrived am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state person home'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Just Arrived'
+        for:
+          minutes: 10
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        from: 'Just Left'
+        to: 'Just Arrived'
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'variable.presence_jakob' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: Home
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called person_home am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state person just left'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - device_tracker.jakob_iphone
+        - device_tracker.katharina_iphone
+        from: 'home'
+        to: 'not_home'
+        for:
+          seconds: 4
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'device_tracker.jakob_iphone' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: Just Left
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called person_just_left am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state person away'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Just Left'
+        for:
+          minutes: 10
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'variable.presence_jakob' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: Away
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called person_away am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state person extended away'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Away'
+        for:
+          hours: 24
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'variable.presence_jakob' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: Extended Away
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called person_extended_away am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state person override'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - input_select.override_jakob
+        - input_select.override_katharina
+    action:
+      - service: variable.set_variable
+        data_template:
+          variable: >
+            {% if trigger.entity_id == 'input_select.override_jakob' %}
+              presence_jakob
+            {% else %}
+              presence_katharina
+            {% endif %}
+          value: >
+            {% if trigger.to_state.state == 'Just Arrived' %}
+              Just Arrived
+            {% elif trigger.to_state.state == 'Home' %}
+              Home
+            {% elif trigger.to_state.state == 'Just Left' %}
+              Just Left
+            {% elif trigger.to_state.state == 'Away' %}
+              Away
+            {% else %}
+              Extended Away
+            {% endif %}
+
+  - alias: 'presence tracking state residents just arrived'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Just Arrived'
+    action:
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called residents_just_arrived am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state residents home'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Home'
+    action:
+      - service: homeassistant.turn_on
+        entity_id: switch.residents_presence
+      - service: homeassistant.turn_off
+        entity_id: switch.residents_vacation
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called residents_home am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state residents away'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Away'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: variable.presence_jakob
+          state: 'Away'
+        - condition: state
+          entity_id: variable.presence_katharina
+          state: 'Away'
+    action:
+      - service: homeassistant.turn_off
+        entity_id: switch.residents_presence
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called residents_away am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"
+
+  - alias: 'presence tracking state residents extended away'
+    initial_state: 'on'
+    trigger:
+      - platform: state
+        entity_id:
+        - variable.presence_jakob
+        - variable.presence_katharina
+        to: 'Extended Away'
+    condition:
+      condition: and
+      conditions:
+        - condition: state
+          entity_id: variable.presence_jakob
+          state: 'Extended Away'
+        - condition: state
+          entity_id: variable.presence_katharina
+          state: 'Extended Away'
+    action:
+      - service: homeassistant.turn_off
+        entity_id: switch.residents_presence
+      - service: homeassistant.turn_on
+        entity_id: switch.residents_vacation
+      - service: notify.telegram_jakob
+        data:
+          title: '*Presence Tracking*'
+          message: "{{ trigger.entity_id }} called residents_extended_away am {{ states.sensor.date.state }} um {{ states.sensor.time.state }}"

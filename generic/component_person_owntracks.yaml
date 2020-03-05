@@ -1,0 +1,36 @@
+#-------------------------------------------
+# Packages / Component Person
+#-------------------------------------------
+homeassistant:
+  customize:
+    person.jakob:
+      entity_picture: /local/jakob.jpg
+    person.katharina:
+      entity_picture: /local/katharina.jpg
+    person.sophie:
+      entity_picture: /local/sophie.jpg
+    person.viola:
+      entity_picture: /local/viola.jpg
+#-------------------------------------------
+person:
+  - name: Jakob
+    id: jakob
+    user_id: 8e13afc12e0040c9a23d6993e184ea1b
+    device_trackers:
+      - device_tracker.jakob_iphone
+
+  - name: Katharina
+    id: katharina
+    user_id: 5af774c9eb254d14b779e49044380840
+    device_trackers:
+      - device_tracker.katharina_iphone
+
+  - name: Sophie
+    id: sophie
+    device_trackers:
+      - device_tracker.loratrack_sophie
+
+  - name: Viola
+    id: viola
+    device_trackers:
+      - device_tracker.loratrack_viola

@@ -1,0 +1,81 @@
+#  Virtual MQTT switches maintain state
+#  over Home Assistant restarts. These switches
+#  mainly enable or disable automations. All
+#  switches have QOS = 1, which is guaranteed delivery
+#  at least once. It is important that switch state
+#  changes always are delivered.
+
+mqtt:
+  broker: !secret muc_mqtt_ip
+  port: 1883
+  client_id: homeassistant
+  discovery: true
+  discovery_prefix: fhome
+  keepalive: 60
+  protocol: 3.1
+  username: !secret muc_mqtt_user
+  password: !secret muc_mqtt_pass
+  birth_message:
+    topic: "fhome/system/LWT"
+    payload: "Online"
+    qos: 1
+    retain: true
+  will_message:
+    topic: "fhome/system/LWT"
+    payload: "Offline"
+    qos: 1
+    retain: true
+
+switch:
+  #  Enable or disable presence-based automations. Presence
+  #  doesn't always work perfectly, so provie a means to disable
+  #  automations that rely on it.
+  - platform: mqtt
+    name: "Residents Presence"
+    state_topic: "fhome/residents/residents"
+    command_topic: "fhome/residents/residents"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+
+  #  Toggle if guests are present. They aren't device-tracked,
+  #  and may reside in areas that normally see other uses,
+  #  so the smart home should act accordingly.
+  - platform: mqtt
+    name: "Guests Presence"
+    state_topic: "fhome/residents/guests"
+    command_topic: "fhome/residents/guests"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+    optimistic: false
+
+  #  Sleeping turns on when my phone plugs in
+  #  after a certain hour (via Tasker). It turns
+  #  off when an alarm goes off (also via Tasker).
+  #  Many automations depend on the state of this
+  #  switch in order to not interrupt sleep.
+  - platform: mqtt
+    name: "Residents Sleeping"
+    state_topic: "fhome/residents/sleeping"
+    command_topic: "fhome/residents/sleeping"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
+
+  #  Vacation is manually switched to enabled or
+  #  disable automations that might otherwise
+  #  automatically trigger based on time of day,
+  #  or other events that are only relevant when
+  #  someone is home or will be home soon.
+  - platform: mqtt
+    name: "Residents Vacation"
+    state_topic: "fhome/residents/vacation"
+    command_topic: "fhome/residents/vacation"
+    qos: 1
+    payload_on: "ON"
+    payload_off: "OFF"
+    retain: true
